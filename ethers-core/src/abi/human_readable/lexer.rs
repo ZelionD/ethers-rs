@@ -618,8 +618,11 @@ impl<'input> HumanReadableParser<'input> {
     fn take_param(&mut self) -> Result<ParamType, LexerError> {
         let (l, token, r) = self.next_spanned()?;
         let kind = match token {
+            Token::Tuple => self.take_param()?,
             Token::OpenParenthesis => {
-                let ty = self.take_params()?;
+                let ty = self.take_csv_until(Token::CloseParenthesis, |s| {
+                    s.take_input_param().map(|param| param.kind)
+                })?;
                 self.take_next_exact(Token::CloseParenthesis)?;
                 ParamType::Tuple(ty)
             }
